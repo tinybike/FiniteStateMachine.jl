@@ -1,5 +1,4 @@
 # Finite state machine library for Julia
-# (based on Jake Gordon's javascript-state-machine)
 # @license MIT
 # @author jack@tinybike.net (Jack Peterson)
 
