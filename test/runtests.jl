@@ -1,5 +1,6 @@
 using JuliaStateMachine
 using Base.Test
 
-# write your own tests here
+statemachine = StateMachine()
+println("fuck you")
 @test 1 == 1
