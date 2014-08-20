@@ -51,8 +51,10 @@ function state_machine(cfg::Dict)
         fsm[name] = cb
     end
     fsm["current"] = "none"
-    fsm["is"] = state -> isa(state, Array) ? findfirst(state, fsm["current"] > 0) : (fsm["current"] == state)
-    fsm["can"] = event -> !fsm["transition"] && (haskey(_map[event], fsm["current"]) || haskey(_map[event], "*"))
+    fsm["is"] = state -> isa(state, Array) ?
+        findfirst(state, fsm["current"] > 0) : (fsm["current"] == state)
+    fsm["can"] = event -> !fsm["transition"] &&
+        (haskey(_map[event], fsm["current"]) || haskey(_map[event], "*"))
     fsm["cannot"] = event -> !fsm["can"](event)
     if haskey(cfg, "error")
         fsm["error"] = cfg["error"]
