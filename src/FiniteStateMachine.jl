@@ -8,9 +8,9 @@ export StateMachine, state_machine
 
 type StateMachine
     initial::Dict{String,String}
-    states::Array{String,1}
     events::Array{Dict{String,String},1}
-    callbacks::Array{String,1}
+    map::Dict
+    callbacks::Dict{String,Function}
 end
 
 include("constants.jl")

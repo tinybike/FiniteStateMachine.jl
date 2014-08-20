@@ -1,18 +1,6 @@
 using FiniteStateMachine
 using Base.Test
 
-fsm = StateMachine(
-    "initialstate",
-    ["state1", "state2", "state3"],
-    ["event1", "event2"],
-    ["callback1", "callback2"]
-)
-
-@test fsm.initial == "initialstate"
-@test fsm.states == ["state1", "state2", "state3"]
-@test fsm.events == ["event1", "event2"]
-@test fsm.callbacks == ["callback1", "callback2"]
-
 cfg = {
     "initial" => "first",
     "final" => "fourth",
@@ -33,4 +21,19 @@ cfg = {
             "to" => "fourth",
         ],
     ],
+    "callbacks" => (String => Function)[
+        "onfirst" => () -> println("boom!"),
+    ],
 }
+
+fsm = state_machine(cfg)
+
+@test fsm.initial["event"] == "startup"
+@test fsm.initial["state"] == "first"
+@test fsm.map["startup"] == {"none"=>"first"}
+@test fsm.map["skip"] == {"second"=>"third"}
+@test fsm.map["jump"] == {"third"=>"fourth"}
+@test fsm.map["hop"] == {"first"=>"second"}
+@test fsm.events[1] == ["name"=>"hop","to"=>"second","from"=>"first"] 
+@test fsm.events[2] == ["name"=>"skip","to"=>"third","from"=>"second"]
+@test fsm.events[3] == ["name"=>"jump","to"=>"fourth","from"=>"third"]

@@ -45,7 +45,7 @@ function state_machine(cfg::Dict)
         add(event, _map)
     end
     for (name, target) in _map
-        fsm[name] = build_event(name, target)
+        fsm[name] = build_event(fsm, name, target)
     end
     for (name, cb) in callbacks
         fsm[name] = cb
@@ -67,7 +67,7 @@ function state_machine(cfg::Dict)
             end
         end
     end
-    fsm
+    StateMachine(initial, events, _map, callbacks)
 end
 
 function add(event::Dict, _map::Dict)
@@ -94,7 +94,7 @@ function add(event::Dict, _map::Dict)
     end
 end
 
-function build_event(fsm::StateMachine, name::String, _map::Dict)
+function build_event(fsm::Dict, name::String, _map::Dict)
     function ()
         from = fsm["current"]
         if haskey(_map, "from")
