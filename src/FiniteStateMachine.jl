@@ -7,13 +7,20 @@ module FiniteStateMachine
 export StateMachine, state_machine
 
 type StateMachine
-    initial::Dict{String,String}
-    events::Array{Dict{String,String},1}
-    map::Dict
-    callbacks::Dict{String,Function}
+    events::Dict
+    current::String
+    function StateMachine(events::Dict)
+        current = events["current"]
+        new(events, current)
+    end
 end
 
-include("constants.jl")
+const RESULT = (ASCIIString => Int8)[
+    "SUCCEEDED" => 1,
+    "NOTRANSITION" => 2,
+    "CANCELLED" => 3,
+    "PENDING" => 4,
+]
 
 include("state_machine.jl")
 

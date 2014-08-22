@@ -1,26 +1,22 @@
-function callback(fsm::Dict, func::Function,
-                  state::String, from::String, to::String)
-    if isdefined(func)
-        try
-            func(fsm, state, from, to)
-        catch
-            error("Invalid callback")
-        end
+# Before event
+function before_event(fsm::Dict, state::String, from::String, to::String)
+    before_this_event(fsm, state, from, to)
+    before_any_event(fsm, state, from, to)
+end
+
+function before_this_event(fsm::Dict, state::String, from::String, to::String)
+    fname = "onbefore" * state
+    if haskey(fsm, fname)
+        fsm[fname](fsm, state, from, to)
     end
 end
 
-# Before event
-function before_event(fsm::Dict, state::String, from::String, to::String)
-    specific = before_this_event(fsm, state, from, to)
-    general = before_any_event(fsm, state, from, to)
-    (~specific || ~general) ? false : ASYNC
+function before_any_event(fsm::Dict, state::String, from::String, to::String)
+    fname = "onbeforeevent"
+    if haskey(fsm, fname)
+        fsm[fname](fsm, state, from, to)
+    end
 end
-
-before_this_event(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onbefore"] + state, state, from, to)
-
-before_any_event(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onbeforeevent"], state, from, to)
 
 # After event
 function after_event(fsm::Dict, state::String, from::String, to::String)
@@ -28,15 +24,31 @@ function after_event(fsm::Dict, state::String, from::String, to::String)
     after_any_event(fsm, state, from, to)
 end
 
-after_this_event(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onafter"] + state, state, from, to)
+function after_this_event(fsm::Dict, state::String, from::String, to::String)
+    fname = "onafter" * state
+    if haskey(fsm, fname)
+        fsm[fname](fsm, state, from, to)
+    end
+end
 
-after_any_event(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onafterevent"] || fsm["onevent"], state, from, to)
+function after_any_event(fsm::Dict, state::String, from::String, to::String)
+    if haskey(fsm, "onafterevent")
+        fname = "onafterevent"
+    elseif haskey(fsm, "onevent")
+        fname = "onevent"
+    else
+        return
+    end
+    fsm[fname](fsm, state, from, to)
+end
 
 # Change of state
-change_state(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onchangestate"], state, from, to)
+function change_state(fsm::Dict, state::String, from::String, to::String)
+    fname = "onchangestate"
+    if haskey(fsm, fname)
+        fsm[fname](fsm, state, from, to)
+    end
+end
 
 # Entering a state
 function enter_state(fsm::Dict, state::String, from::String, to::String)
@@ -44,21 +56,40 @@ function enter_state(fsm::Dict, state::String, from::String, to::String)
     enter_any_state(fsm, state, from, to)
 end
 
-enter_this_state(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onenter"] + to, state, from, to)
+function enter_this_state(fsm::Dict, state::String, from::String, to::String)
+    fname = "onenter" * to
+    if haskey(fsm, fname)
+        fsm[fname](fsm, state, from, to)
+    end
+end
 
-enter_any_state(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onenterstate"] || fsm["onstate"], state, from, to)
+function enter_any_state(fsm::Dict, state::String, from::String, to::String)
+    if haskey(fsm, "onenterstate")
+        fname = "onenterstate"
+    elseif haskey(fsm, "onstate")
+        fname = "onstate"
+    else
+        return
+    end
+    fsm[fname](fsm, state, from, to)
+end
 
 # Leaving a state
 function leave_state(fsm::Dict, state::String, from::String, to::String)
-    specific = leave_this_state(fsm, state, from, to)
-    general = leave_any_state(fsm, state, from, to)
-    (~specific || ~general) ? false : ASYNC
+    leave_this_state(fsm, state, from, to)
+    leave_any_state(fsm, state, from, to)
 end
 
-leave_this_state(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onleave"] + from, state, from, to)
+function leave_this_state(fsm::Dict, state::String, from::String, to::String)
+    fname = "onleave" * from
+    if haskey(fsm, fname)
+        fsm[fname](fsm, state, from, to)
+    end
+end
 
-leave_any_state(fsm::Dict, state::String, from::String, to::String) =
-    callback(fsm, fsm["onleavestate"], state, from, to)
+function leave_any_state(fsm::Dict, state::String, from::String, to::String)
+    fname = "onleavestate"
+    if haskey(fsm, fname)
+        fsm[fname](fsm, state, from, to)
+    end
+end

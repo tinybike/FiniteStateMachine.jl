@@ -22,18 +22,22 @@ cfg = {
         ],
     ],
     "callbacks" => (String => Function)[
-        "onfirst" => () -> println("boom!"),
+        "onbeforeevent" => () -> println("boom!"),
     ],
 }
 
 fsm = state_machine(cfg)
 
-@test fsm.initial["event"] == "startup"
-@test fsm.initial["state"] == "first"
-@test fsm.map["startup"] == {"none"=>"first"}
-@test fsm.map["skip"] == {"second"=>"third"}
-@test fsm.map["jump"] == {"third"=>"fourth"}
-@test fsm.map["hop"] == {"first"=>"second"}
-@test fsm.events[1] == ["name"=>"hop","to"=>"second","from"=>"first"] 
-@test fsm.events[2] == ["name"=>"skip","to"=>"third","from"=>"second"]
-@test fsm.events[3] == ["name"=>"jump","to"=>"fourth","from"=>"third"]
+@test fsm.current == "none"
+
+fsm.events["startup"]()
+@test fsm.events["current"] == "first"
+
+fsm.events["hop"]()
+@test fsm.events["current"] == "second"
+
+fsm.events["skip"]()
+@test fsm.events["current"] == "third"
+
+fsm.events["jump"]()
+@test fsm.events["current"] == "fourth"

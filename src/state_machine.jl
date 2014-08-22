@@ -1,9 +1,29 @@
 function state_machine(cfg::Dict)
+    function add(event::Dict)
+        if haskey(event, "from")
+            if isa(event["from"], Array)
+                from = event["from"]
+            else
+                from = String[event["from"]]
+            end
+        end
+        if !haskey(_map, event["name"])
+            _map[event["name"]] = Dict()
+        end
+        for f in from
+            if haskey(event, "to")
+                _map[event["name"]][f] = event["to"]
+            else
+                # No-op transition
+                _map[event["name"]][f] = f
+            end
+        end
+    end
     fsm = Dict()
     _map = Dict()
     # Initial state
     if haskey(cfg, "initial")
-        if typeof(cfg["initial"]) <: String
+        if isa(cfg["initial"], String)
             initial = (String => String)["state" => cfg["initial"]]
         else
             initial = cfg["initial"]
@@ -39,13 +59,13 @@ function state_machine(cfg::Dict)
             "name" => initial["event"],
             "from" => "none",
             "to" => initial["state"],
-        ], _map)
+        ])
     end
     for event in events
-        add(event, _map)
+        add(event)
     end
-    for (name, target) in _map
-        fsm[name] = build_event(fsm, name, target)
+    for (name, minimap) in _map
+        fsm[name] = build_event(fsm, name, minimap)
     end
     for (name, cb) in callbacks
         fsm[name] = cb
@@ -53,14 +73,8 @@ function state_machine(cfg::Dict)
     fsm["current"] = "none"
     fsm["is"] = state -> isa(state, Array) ?
         findfirst(state, fsm["current"] > 0) : (fsm["current"] == state)
-    fsm["can"] = event -> !fsm["transition"] &&
-        (haskey(_map[event], fsm["current"]) || haskey(_map[event], "*"))
+    fsm["can"] = event -> !haskey(fsm, "transition") && haskey(_map[event], fsm["current"])
     fsm["cannot"] = event -> !fsm["can"](event)
-    if haskey(cfg, "error")
-        fsm["error"] = cfg["error"]
-    else
-        fsm["error"] = (name, from, to, args, error, msg, exc) -> error(exc)
-    end
     fsm["isfinished"] = () -> fsm["is"](terminal)
     if initial != nothing
         if haskey(initial, "defer")
@@ -69,84 +83,44 @@ function state_machine(cfg::Dict)
             end
         end
     end
-    StateMachine(initial, events, _map, callbacks)
-end
-
-function add(event::Dict, _map::Dict)
-    if haskey(event, "from")
-        if typeof(event["from"]) <: Array
-            from = event["from"]
-        else
-            from = String[event["from"]]
-        end
-    else
-        # Wildcard transition
-        from = "*"
-    end
-    if !haskey(_map, event["name"])
-        _map[event["name"]] = Dict()
-    end
-    for f in from
-        if haskey(event, "to")
-            _map[event["name"]][f] = event["to"]
-        else
-            # No-op transition
-            _map[event["name"]][f] = f
-        end
-    end
+    StateMachine(fsm)
 end
 
 function build_event(fsm::Dict, name::String, _map::Dict)
     function ()
         from = fsm["current"]
-        if haskey(_map, "from")
-            to = _map["from"]
-        elseif haskey(_map, "*")
-            to = _map["*"]
+        if haskey(_map, from)
+            to = _map[from]
         else
             to = from
-        end
-        if fsm["transition"]
-            return error(name * " inappropriate because previous transition did not complete")
         end
         if fsm["cannot"](name)
             return error(name * " inappropriate in current state " * fsm["current"])
         end
-        if before_event(fsm, name, from, to)
-            return RESULT["CANCELLED"]
-        end
         if from == to
             after_event(fsm, name, from, to)
-            return RESULT["NOTRANSITION"]
-        end
-        fsm["transition"] = function ()
-            if haskey(fsm, "transition")
-                delete!(fsm, "transition")
-            end
-            fsm["current"] = to
-            enter_state(fsm, name, from, to)
-            change_state(fsm, name, from, to)
-            after_event(fsm, name, from, to)
-            RESULT["SUCCEEDED"]
-        end
-        # Cancel asynchronous transition on request
-        fsm["cancel_transition"] = function ()
-            if haskey(fsm, "transition")
-                delete!(fsm, "transition")
-            end
-            after_event(fsm, name, from, to)
-        end
-        leave = leave_state(fsm, name, from, to)
-        if leave == false
-            if haskey(fsm, "transition")
-                delete!(fsm, "transition")
-            end
-            RESULT["CANCELLED"]
-        elseif leave == ASYNC
-            RESULT["PENDING"]
+            RESULT["NOTRANSITION"]
         else
-            if fsm["transition"]
-                fsm["transition"]()
+            fsm["transition"] = function ()
+                if haskey(fsm, "transition")
+                    delete!(fsm, "transition")
+                end
+                fsm["current"] = to
+                enter_state(fsm, name, from, to)
+                change_state(fsm, name, from, to)
+                after_event(fsm, name, from, to)
+                RESULT["SUCCEEDED"]
+            end
+            leave = leave_state(fsm, name, from, to)
+            if leave == false
+                if haskey(fsm, "transition")
+                    delete!(fsm, "transition")
+                end
+                RESULT["CANCELLED"]
+            else
+                if haskey(fsm, "transition")
+                    fsm["transition"]()
+                end
             end
         end
     end
