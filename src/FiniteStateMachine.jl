@@ -9,10 +9,8 @@ export StateMachine, state_machine
 type StateMachine
     events::Dict
     current::String
-    function StateMachine(events::Dict)
-        current = events["current"]
-        new(events, current)
-    end
+    StateMachine() = new(Dict(), "none")
+    StateMachine(events::Dict) = new(events, events["current"])
 end
 
 const RESULT = (ASCIIString => Int8)[

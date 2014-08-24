@@ -29,15 +29,36 @@ cfg = {
 fsm = state_machine(cfg)
 
 @test fsm.current == "none"
+@test fsm.events["isfinished"]() == false
+@test_throws ErrorException fsm.events["jump"]()
+@test_throws ErrorException fsm.events["skip"]()
+@test_throws ErrorException fsm.events["hop"]()
 
 fsm.events["startup"]()
-@test fsm.events["current"] == "first"
+@test fsm.current == "first"
+@test fsm.events["isfinished"]() == false
+@test_throws ErrorException fsm.events["jump"]()
+@test_throws ErrorException fsm.events["skip"]()
+@test_throws ErrorException fsm.events["startup"]()
 
 fsm.events["hop"]()
-@test fsm.events["current"] == "second"
+@test fsm.current == "second"
+@test fsm.events["isfinished"]() == false
+@test_throws ErrorException fsm.events["jump"]()
+@test_throws ErrorException fsm.events["hop"]()
+@test_throws ErrorException fsm.events["startup"]()
 
 fsm.events["skip"]()
-@test fsm.events["current"] == "third"
+@test fsm.current == "third"
+@test fsm.events["isfinished"]() == false
+@test_throws ErrorException fsm.events["hop"]()
+@test_throws ErrorException fsm.events["skip"]()
+@test_throws ErrorException fsm.events["startup"]()
 
 fsm.events["jump"]()
-@test fsm.events["current"] == "fourth"
+@test fsm.current == "fourth"
+@test fsm.events["isfinished"]() == true
+@test_throws ErrorException fsm.events["jump"]()
+@test_throws ErrorException fsm.events["skip"]()
+@test_throws ErrorException fsm.events["hop"]()
+@test_throws ErrorException fsm.events["startup"]()
