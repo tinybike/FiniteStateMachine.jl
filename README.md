@@ -14,30 +14,27 @@ A simple finite state machine library for Julia, based on Jake Gordon's [javascr
 
     julia> using FiniteStateMachine
 
-    julia> fsm = state_machine((String => Any)[
+    julia> fsm = state_machine({
         "initial" => "first",
         "final" => "fourth",
-        "events" => Dict{String,String}[
-            (String => String)[
+        "events" => [{
                 "name" => "hop",
                 "from" => "first",
                 "to" => "second",
-            ],
-            (String => String)[
+            }, {
                 "name" => "skip",
                 "from" => "second",
                 "to" => "third",
-            ],
-            (String => String)[
+            }, {
                 "name" => "jump",
                 "from" => "third",
                 "to" => "fourth",
-            ],
+            },
         ],
-        "callbacks" => (String => Function)[
+        "callbacks" => {
             "onbeforeevent" => (fsm::StateMachine, args...) -> 1+1,
-        ],
-    ])
+        },
+    })
 
 Events are called using the `fire` function:
 
@@ -65,6 +62,14 @@ Events are called using the `fire` function:
 Unless other specified, a special "startup" event fires automatically when the state machine is created.
 
 The "initial" field can be either a string, or a dict specifying: `state` (the name of the state in which to start), `event` (the startup event), and/or `defer` (set to `true` if the startup event should *not* be fired automatically when the state machine is created).
+
+Supports multiple source states, for example, the following code allows "hop" to take place from either the "first" or "third" states:
+            
+    "events" => [{
+        "name" => "hop",
+        "from" => ["first", "third"],
+        "to" => "second",
+    },
 
 ### Tests
 

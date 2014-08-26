@@ -17,3 +17,6 @@
 @test enter_this_state(fsm, "hop", "first", "second") == 21
 @test leave_any_state(fsm, "hop", "first", "second") == 34
 @test leave_this_state(fsm, "hop", "first", "second") == 55
+
+@test after_any_event(mfsm, "hop", "first", "second") == 1
+@test enter_any_state(mfsm, "hop", "first", "second") == -1

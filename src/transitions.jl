@@ -1,8 +1,8 @@
 # Transition callback
 function callback(fsm::StateMachine,
                   action::String, name::String, from::String, to::String)
-    if haskey(actions, action)
-        actions[action](fsm, name, from, to)
+    if haskey(fsm.actions, action)
+        fsm.actions[action](fsm, name, from, to)
     end
 end
 
@@ -28,9 +28,9 @@ after_this_event(fsm::StateMachine, name::String, from::String, to::String) =
     callback(fsm, "onafter" * name, name, from, to)
 
 function after_any_event(fsm::StateMachine, name::String, from::String, to::String)
-    if haskey(actions, "onafterevent")
+    if haskey(fsm.actions, "onafterevent")
         action = "onafterevent"
-    elseif haskey(actions, "onevent")
+    elseif haskey(fsm.actions, "onevent")
         action = "onevent"
     else
         return
@@ -52,9 +52,9 @@ enter_this_state(fsm::StateMachine, name::String, from::String, to::String) =
     callback(fsm, "onenter" * to, name, from, to)
 
 function enter_any_state(fsm::StateMachine, name::String, from::String, to::String)
-    if haskey(actions, "onenterstate")
+    if haskey(fsm.actions, "onenterstate")
         action = "onenterstate"
-    elseif haskey(actions, "onstate")
+    elseif haskey(fsm.actions, "onstate")
         action = "onstate"
     else
         return

@@ -1,15 +1,17 @@
 # Create a finite state machine, using model supplied by the user.
-function state_machine(model::Dict{String,Any})
+function state_machine(model::Dict)
 
     fsm = StateMachine()
 
     # Write events and their associated states to the state machine's map
     function add(event::Dict)
+
+        # Multiple source states are allowed
         if haskey(event, "from")
             if isa(event["from"], Array)
                 from = event["from"]
             else
-                from = String[event["from"]]
+                from = [event["from"]]
             end
         end
         if !haskey(fsm.map, event["name"])
@@ -33,10 +35,10 @@ function state_machine(model::Dict{String,Any})
         # Initial state can be specified as a string or dict.
         # If the initial event has not been specified, default to "startup".
         if isa(model["initial"], String)
-            initial = (String => String)[
+            initial = {
                 "state" => model["initial"],
                 "event" => "startup",
-            ]
+            }
         else
             initial = model["initial"]
             if !haskey(initial, "event")
@@ -45,11 +47,11 @@ function state_machine(model::Dict{String,Any})
         end
 
         # Add the startup event to the map
-        add((String => String)[
+        add({
             "name" => initial["event"],
             "from" => "none",
             "to" => initial["state"],
-        ])
+        })
     end
 
     # Terminal (final) state
@@ -68,7 +70,7 @@ function state_machine(model::Dict{String,Any})
 
     # Set up the callable events (functions), which can be invoked by fire()
     for (name, minimap) in fsm.map
-        actions[name] = () -> begin
+        fsm.actions[name] = () -> begin
             from = fsm.current
             to = haskey(minimap, from) ? minimap[from] : from
             if !fire(fsm, "can", name)
@@ -88,7 +90,7 @@ function state_machine(model::Dict{String,Any})
     # Set up user-specified callbacks, if any were provided
     if haskey(model, "callbacks")
         for (name, callback) in model["callbacks"]
-            actions[name] = callback
+            fsm.actions[name] = callback
         end
     end
 

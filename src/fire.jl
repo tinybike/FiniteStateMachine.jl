@@ -20,8 +20,8 @@ function fire(fsm::StateMachine, name::String, args...)
         fsm.current == fsm.terminal
     
     # User-defined events and callbacks
-    elseif haskey(actions, name)
-        actions[name]()
+    elseif haskey(fsm.actions, name)
+        fsm.actions[name]()
 
     # Throw an error if there weren't any matching names
     else
