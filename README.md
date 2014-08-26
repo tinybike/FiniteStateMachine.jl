@@ -6,7 +6,7 @@ A simple finite state machine library for Julia, based on Jake Gordon's [javascr
 
 ### Installation
 
-    julia> Pkg.clone("git://github.com/tensorjack/FiniteStateMachine.jl")
+    julia> Pkg.add("FiniteStateMachine")
 
 ### Usage
 
@@ -35,7 +35,7 @@ A simple finite state machine library for Julia, based on Jake Gordon's [javascr
             ],
         ],
         "callbacks" => (String => Function)[
-            "onbeforeevent" => (fsm::StateMachine, args...) -> 10,
+            "onbeforeevent" => (fsm::StateMachine, args...) -> 1+1,
         ],
     ])
 
