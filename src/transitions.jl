@@ -1,95 +1,75 @@
+# Transition callback
+function callback(fsm::StateMachine,
+                  action::String, name::String, from::String, to::String)
+    if haskey(actions, action)
+        actions[action](fsm, name, from, to)
+    end
+end
+
 # Before event
-function before_event(fsm::StateMachine, state::String, from::String, to::String)
-    before_this_event(fsm, state, from, to)
-    before_any_event(fsm, state, from, to)
+function before_event(fsm::StateMachine, name::String, from::String, to::String)
+    before_this_event(fsm, name, from, to)
+    before_any_event(fsm, name, from, to)
 end
 
-function before_this_event(fsm::StateMachine, state::String, from::String, to::String)
-    fname = "onbefore" * state
-    if haskey(fsm.events, fname)
-        fsm.events[fname](fsm, state, from, to)
-    end
-end
+before_this_event(fsm::StateMachine, name::String, from::String, to::String) =
+    callback(fsm, "onbefore" * name, name, from, to)
 
-function before_any_event(fsm::StateMachine, state::String, from::String, to::String)
-    fname = "onbeforeevent"
-    if haskey(fsm.events, fname)
-        fsm.events[fname](fsm, state, from, to)
-    end
-end
+before_any_event(fsm::StateMachine, name::String, from::String, to::String) =
+    callback(fsm, "onbeforeevent", name, from, to)
 
 # After event
-function after_event(fsm::StateMachine, state::String, from::String, to::String)
-    after_this_event(fsm, state, from, to)
-    after_any_event(fsm, state, from, to)
+function after_event(fsm::StateMachine, name::String, from::String, to::String)
+    after_this_event(fsm, name, from, to)
+    after_any_event(fsm, name, from, to)
 end
 
-function after_this_event(fsm::StateMachine, state::String, from::String, to::String)
-    fname = "onafter" * state
-    if haskey(fsm.events, fname)
-        fsm.events[fname](fsm, state, from, to)
-    end
-end
+after_this_event(fsm::StateMachine, name::String, from::String, to::String) =
+    callback(fsm, "onafter" * name, name, from, to)
 
-function after_any_event(fsm::StateMachine, state::String, from::String, to::String)
-    if haskey(fsm.events, "onafterevent")
-        fname = "onafterevent"
-    elseif haskey(fsm.events, "onevent")
-        fname = "onevent"
+function after_any_event(fsm::StateMachine, name::String, from::String, to::String)
+    if haskey(actions, "onafterevent")
+        action = "onafterevent"
+    elseif haskey(actions, "onevent")
+        action = "onevent"
     else
         return
     end
-    fsm.events[fname](fsm, state, from, to)
+    callback(fsm, action, name, from, to)
 end
 
 # Change of state
-function change_state(fsm::StateMachine, state::String, from::String, to::String)
-    fname = "onchangestate"
-    if haskey(fsm.events, fname)
-        fsm.events[fname](fsm, state, from, to)
-    end
-end
+change_state(fsm::StateMachine, name::String, from::String, to::String) = 
+    callback(fsm, "onchangestate", name, from, to)
 
 # Entering a state
-function enter_state(fsm::StateMachine, state::String, from::String, to::String)
-    enter_this_state(fsm, state, from, to)
-    enter_any_state(fsm, state, from, to)
+function enter_state(fsm::StateMachine, name::String, from::String, to::String)
+    enter_this_state(fsm, name, from, to)
+    enter_any_state(fsm, name, from, to)
 end
 
-function enter_this_state(fsm::StateMachine, state::String, from::String, to::String)
-    fname = "onenter" * to
-    if haskey(fsm.events, fname)
-        fsm.events[fname](fsm, state, from, to)
-    end
-end
+enter_this_state(fsm::StateMachine, name::String, from::String, to::String) =
+    callback(fsm, "onenter" * to, name, from, to)
 
-function enter_any_state(fsm::StateMachine, state::String, from::String, to::String)
-    if haskey(fsm.events, "onenterstate")
-        fname = "onenterstate"
-    elseif haskey(fsm.events, "onstate")
-        fname = "onstate"
+function enter_any_state(fsm::StateMachine, name::String, from::String, to::String)
+    if haskey(actions, "onenterstate")
+        action = "onenterstate"
+    elseif haskey(actions, "onstate")
+        action = "onstate"
     else
         return
     end
-    fsm.events[fname](fsm, state, from, to)
+    callback(fsm, action, name, from, to)
 end
 
 # Leaving a state
-function leave_state(fsm::StateMachine, state::String, from::String, to::String)
-    leave_this_state(fsm, state, from, to)
-    leave_any_state(fsm, state, from, to)
+function leave_state(fsm::StateMachine, name::String, from::String, to::String)
+    leave_this_state(fsm, name, from, to)
+    leave_any_state(fsm, name, from, to)
 end
 
-function leave_this_state(fsm::StateMachine, state::String, from::String, to::String)
-    fname = "onleave" * from
-    if haskey(fsm.events, fname)
-        fsm.events[fname](fsm, state, from, to)
-    end
-end
+leave_this_state(fsm::StateMachine, name::String, from::String, to::String) =
+    callback(fsm, "onleave" * from, name, from, to)
 
-function leave_any_state(fsm::StateMachine, state::String, from::String, to::String)
-    fname = "onleavestate"
-    if haskey(fsm.events, fname)
-        fsm.events[fname](fsm, state, from, to)
-    end
-end
+leave_any_state(fsm::StateMachine, name::String, from::String, to::String) =
+    callback(fsm, "onleavestate", name, from, to)

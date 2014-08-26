@@ -1,4 +1,9 @@
-function state_machine(cfg::Dict)
+# Create a finite state machine, using model supplied by the user.
+function state_machine(model::Dict{String,Any})
+
+    fsm = StateMachine()
+
+    # Write events and their associated states to the state machine's map
     function add(event::Dict)
         if haskey(event, "from")
             if isa(event["from"], Array)
@@ -7,120 +12,90 @@ function state_machine(cfg::Dict)
                 from = String[event["from"]]
             end
         end
-        if !haskey(_map, event["name"])
-            _map[event["name"]] = Dict()
+        if !haskey(fsm.map, event["name"])
+            fsm.map[event["name"]] = Dict()
         end
+
+        # Use "to" if it has been specified; otherwise, this is a no-op
+        # transition (before and after states are the same)
         for f in from
             if haskey(event, "to")
-                _map[event["name"]][f] = event["to"]
+                fsm.map[event["name"]][f] = event["to"]
             else
-                # No-op transition
-                _map[event["name"]][f] = f
+                fsm.map[event["name"]][f] = f
             end
         end
     end
-    fsm = StateMachine()
-    _map = Dict()
-    # Initial state
-    if haskey(cfg, "initial")
-        if isa(cfg["initial"], String)
-            initial = (String => String)["state" => cfg["initial"]]
+
+    # Set up initial state and startup event
+    if haskey(model, "initial")
+
+        # Initial state can be specified as a string or dict.
+        # If the initial event has not been specified, default to "startup".
+        if isa(model["initial"], String)
+            initial = (String => String)[
+                "state" => model["initial"],
+                "event" => "startup",
+            ]
         else
-            initial = cfg["initial"]
+            initial = model["initial"]
+            if !haskey(initial, "event")
+                initial["event"] = "startup"
+            end
         end
-    else
-        initial = nothing
-    end
-    # Terminal state
-    if haskey(cfg, "terminal")
-        terminal = cfg["terminal"]
-    elseif haskey(cfg, "final")
-        terminal = cfg["final"]
-    else
-        terminal = nothing
-    end
-    # Event list
-    if haskey(cfg, "events")
-        events = cfg["events"]
-    else
-        events = Dict[]
-    end
-    # Callback list
-    if haskey(cfg, "callbacks")
-        callbacks = cfg["callbacks"]
-    else
-        callbacks = Dict{String,String}()
-    end
-    if initial != nothing
-        if !haskey(initial, "event")
-            initial["event"] = "startup"
-        end
+
+        # Add the startup event to the map
         add((String => String)[
             "name" => initial["event"],
             "from" => "none",
             "to" => initial["state"],
         ])
     end
-    for event in events
-        add(event)
-    end
-    for (name, minimap) in _map
-        fsm.events[name] = build_event(fsm, name, minimap)
-    end
-    for (name, cb) in callbacks
-        fsm.events[name] = cb
-    end
-    fsm.events["is"] = state -> isa(state, Array) ?
-        findfirst(state, fsm.current > 0) : (fsm.current == state)
-    fsm.events["can"] = event -> !haskey(fsm.events, "transition") && haskey(_map[event], fsm.current)
-    fsm.events["cannot"] = event -> !fsm.events["can"](event)
-    fsm.events["isfinished"] = () -> fsm.events["is"](terminal)
-    if initial != nothing
-        if haskey(initial, "defer")
-            if !initial["defer"]
-                fsm.events[initial["event"]]()
-            end
-        end
-    end
-    return fsm
-end
 
-function build_event(fsm::StateMachine, name::String, _map::Dict)
-    function ()
-        from = fsm.current
-        if haskey(_map, from)
-            to = _map[from]
-        else
-            to = from
+    # Terminal (final) state
+    if haskey(model, "terminal")
+        fsm.terminal = model["terminal"]
+    elseif haskey(model, "final")
+        fsm.terminal = model["final"]
+    end
+
+    # Write user-specified events to the map
+    if haskey(model, "events")
+        for event in model["events"]
+            add(event)
         end
-        if fsm.events["cannot"](name)
-            return error(name * " inappropriate in current state " * fsm.current)
-        end
-        if from == to
-            after_event(fsm, name, from, to)
-            RESULT["NOTRANSITION"]
-        else
-            fsm.events["transition"] = function ()
-                if haskey(fsm.events, "transition")
-                    delete!(fsm.events, "transition")
-                end
+    end
+
+    # Set up the callable events (functions), which can be invoked by fire()
+    for (name, minimap) in fsm.map
+        actions[name] = () -> begin
+            from = fsm.current
+            to = haskey(minimap, from) ? minimap[from] : from
+            if !fire(fsm, "can", name)
+                error(name * " is not accessible from state " * fsm.current)
+            elseif from == to
+                after_event(fsm, name, from, to)
+            else
+                leave_state(fsm, name, from, to)
                 fsm.current = to
                 enter_state(fsm, name, from, to)
                 change_state(fsm, name, from, to)
                 after_event(fsm, name, from, to)
-                RESULT["SUCCEEDED"]
-            end
-            leave = leave_state(fsm, name, from, to)
-            if leave == false
-                if haskey(fsm.events, "transition")
-                    delete!(fsm.events, "transition")
-                end
-                RESULT["CANCELLED"]
-            else
-                if haskey(fsm.events, "transition")
-                    fsm.events["transition"]()
-                end
             end
         end
     end
+
+    # Set up user-specified callbacks, if any were provided
+    if haskey(model, "callbacks")
+        for (name, callback) in model["callbacks"]
+            actions[name] = callback
+        end
+    end
+
+    # Fire (or defer firing of) the initial event
+    if !haskey(initial, "defer") || !initial["defer"]
+        fire(fsm, initial["event"])
+    end
+
+    fsm
 end
