@@ -1,6 +1,6 @@
 ## FiniteStateMachine
 
-[![Build Status](https://travis-ci.org/tinybike/FiniteStateMachine.jl.svg)](https://travis-ci.org/tinybike/FiniteStateMachine.jl) [![Coverage Status](https://coveralls.io/repos/tinybike/FiniteStateMachine.jl/badge.png)](https://coveralls.io/r/tinybike/FiniteStateMachine.jl) [![FiniteStateMachine](http://pkg.julialang.org/badges/FiniteStateMachine_nightly.svg)](http://pkg.julialang.org/?pkg=FiniteStateMachine&ver=nightly)
+[![Build Status](https://travis-ci.org/tinybike/FiniteStateMachine.jl.svg)](https://travis-ci.org/tinybike/FiniteStateMachine.jl) [![Coverage Status](https://coveralls.io/repos/tinybike/FiniteStateMachine.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/tinybike/FiniteStateMachine.jl?branch=master) [![FiniteStateMachine](http://pkg.julialang.org/badges/FiniteStateMachine_nightly.svg)](http://pkg.julialang.org/?pkg=FiniteStateMachine&ver=stable)
 
 A simple finite state machine library for Julia, based on Jake Gordon's [javascript-state-machine](https://github.com/jakesgordon/javascript-state-machine).
 
