@@ -34,11 +34,11 @@ function state_machine(model::Dict)
 
         # Initial state can be specified as a string or dict.
         # If the initial event has not been specified, default to "startup".
-        if isa(model["initial"], String)
-            initial = {
+        if isa(model["initial"], AbstractString)
+            initial = Dict{AbstractString, Any}(
                 "state" => model["initial"],
                 "event" => "startup",
-            }
+            )
         else
             initial = model["initial"]
             if !haskey(initial, "event")
@@ -47,11 +47,11 @@ function state_machine(model::Dict)
         end
 
         # Add the startup event to the map
-        add({
+        add(Dict{AbstractString, Any}(
             "name" => initial["event"],
             "from" => "none",
             "to" => initial["state"],
-        })
+        ))
     end
 
     # Terminal (final) state

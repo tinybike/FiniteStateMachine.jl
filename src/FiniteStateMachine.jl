@@ -9,8 +9,8 @@ export StateMachine, state_machine, fire, callback, before_event, before_this_ev
 type StateMachine
     map::Dict
     actions::Dict
-    current::String
-    terminal::Union(String, Nothing)
+    current::AbstractString
+    terminal::Union{AbstractString, Void}
     StateMachine() = new(Dict(), Dict(), "none", nothing)
 end
 
