@@ -1,21 +1,23 @@
-fsm = state_machine(Dict{AbstractString, Any}(
+using Compat
+
+fsm = state_machine(@compat Dict{AbstractString, Any}(
     "initial" => "first",
     "final" => "fourth",
-    "events" => [Dict{AbstractString, Any}(
+    "events" => @compat( [ Dict{AbstractString, Any}(
             "name" => "hop",
             "from" => "first",
-            "to" => "second",
-        ), Dict{AbstractString, Any}(
+            "to" => "second"
+        ),  Dict{AbstractString, Any}(
             "name" => "skip",
             "from" => "second",
-            "to" => "third",
-        ), Dict{AbstractString, Any}(
+            "to" => "third"
+        ),  Dict{AbstractString, Any}(
             "name" => "jump",
             "from" => "third",
-            "to" => "fourth",
-        ),
-    ],
-    "callbacks" => Dict{AbstractString, Any}(
+            "to" => "fourth"
+        )
+    ]),
+    "callbacks" => @compat Dict{AbstractString, Any}(
         "onbeforeevent" => (fsm::StateMachine, args...) -> 1,
         "onafterevent" => (fsm::StateMachine, args...) -> 1 + 1,
         "onbeforejump" => (fsm::StateMachine, args...) -> 1 + 2,
@@ -24,27 +26,27 @@ fsm = state_machine(Dict{AbstractString, Any}(
         "onenterstate" => (fsm::StateMachine, args...) -> 5 + 8,
         "onentersecond" => (fsm::StateMachine, args...) -> 8 + 13,
         "onleavestate" => (fsm::StateMachine, args...) -> 13 + 21,
-        "onleavefirst" => (fsm::StateMachine, args...) -> 21 + 34,
-    ),
+        "onleavefirst" => (fsm::StateMachine, args...) -> 21 + 34
+    )
 ))
 
 @test fsm.current == "first"
 @test fsm.terminal == "fourth"
-@test fsm.map == Dict{AbstractString, Any}(
-    "startup" => Dict("none" => "first"),
-    "skip" => Dict("second" => "third"),
-    "jump" => Dict("third" => "fourth"),
-    "hop" => Dict("first" => "second"),
-)
+@test fsm.map == @compat( Dict{AbstractString, Any}(
+    "startup" => @compat( Dict("none" => "first")),
+    "skip" => @compat( Dict("second" => "third")),
+    "jump" => @compat( Dict("third" => "fourth")),
+    "hop" => @compat( Dict("first" => "second"))
+))
 
-dfsm = state_machine(Dict{AbstractString, Any}(
-    "initial" => Dict{AbstractString, Any}(
+dfsm = state_machine(@compat Dict{AbstractString, Any}(
+    "initial" => @compat( Dict{AbstractString, Any}(
         "state" => "first",
         "event" => "dance",
         "defer" => true,
-    ),
+    )),
     "terminal" => "fourth",
-    "events" => [Dict{AbstractString, Any}(
+    "events" => @compat [Dict{AbstractString, Any}(
             "name" => "hop",
             "from" => "first",
             "to" => "second",
@@ -60,18 +62,18 @@ dfsm = state_machine(Dict{AbstractString, Any}(
             "from" => "third",
             "to" => "fourth",
         )
-    ],
+    ]
 ))
 
 @test dfsm.current == "none"
 @test dfsm.terminal == "fourth"
 
-mfsm = state_machine(Dict{AbstractString, Any}(
-    "initial" => Dict{AbstractString, Any}(
+mfsm = state_machine(@compat Dict{AbstractString, Any}(
+    "initial" => @compat( Dict{AbstractString, Any}(
         "state" => "first",
         "defer" => false,
-    ),
-    "events" => [Dict{AbstractString, Any}(
+    )),
+    "events" => @compat( [Dict{AbstractString, Any}(
             "name" => "hop",
             "from" => ["first", "third"],
             "to" => "second",
@@ -82,12 +84,12 @@ mfsm = state_machine(Dict{AbstractString, Any}(
         ), Dict{AbstractString, Any}(
             "name" => "sleep",
             "from" => "third",
-        ),
-    ],
-    "callbacks" => Dict{AbstractString, Any}(
+        )
+    ]),
+    "callbacks" => @compat( Dict{AbstractString, Any}(
         "onevent" => (fsm::StateMachine, args...) -> 1,
         "onstate" => (fsm::StateMachine, args...) -> -1,
-    ),
+    ))
 ))
 
 @test mfsm.current == "first"
