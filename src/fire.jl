@@ -1,5 +1,5 @@
 # Fire a state transition
-function fire(fsm::StateMachine, name::String, args...)
+function fire(fsm::StateMachine, name::AbstractString, args...)
 
     # Reserved event names: is, can, finished
     # is: check whether the current state is the same as the requested state
@@ -18,7 +18,7 @@ function fire(fsm::StateMachine, name::String, args...)
     #           returns true if current = terminal state, false otherwise
     elseif name == "finished"
         fsm.current == fsm.terminal
-    
+
     # User-defined events and callbacks
     elseif haskey(fsm.actions, name)
         fsm.actions[name]()
